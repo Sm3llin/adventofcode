@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"sync"
 )
 
 func main() {
@@ -16,6 +17,8 @@ func main() {
 			panic(err)
 		}
 
+		wg := sync.WaitGroup{}
+		lock := sync.Mutex{}
 		var sum int
 		for _, line := range bytes.Split(data, []byte("\n")) {
 			total, operators, err := Extract(line)
@@ -23,13 +26,20 @@ func main() {
 				panic(err)
 			}
 
-			if Reason(operators, total) {
-				//fmt.Printf("True: %s\n", line)
-				sum += total
-			} else {
-				//fmt.Printf("False: %s\n", line)
-			}
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				if Reason(operators, total) {
+					//fmt.Printf("True: %s\n", line)
+					lock.Lock()
+					defer lock.Unlock()
+					sum += total
+				} else {
+					//fmt.Printf("False: %s\n", line)
+				}
+			}()
 		}
+		wg.Wait()
 		fmt.Printf("Sum: %d\n", sum)
 	})
 }
@@ -54,10 +64,8 @@ func Reason(operators []int, expectedResult int) bool {
 
 	calc := func(current int, remaining []int, expected int, next recursingCalc) bool {
 		if current > expected {
-			//result <- false
 			return false
 		} else if len(remaining) == 0 {
-			//result <- current == expected
 			return current == expected
 		}
 
