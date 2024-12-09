@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"sync"
 )
 
 func main() {
@@ -35,13 +34,10 @@ func main() {
 	})
 }
 
-type recursingCalc func(current int, remaining []int, expected int, next recursingCalc)
+type recursingCalc func(current int, remaining []int, expected int, next recursingCalc) bool
 
 func Reason(operators []int, expectedResult int) bool {
 	// unable to reason the operator type we need to try all the different combinations to get the result
-	result := make(chan bool)
-	wg := &sync.WaitGroup{}
-
 	add := func(a, b int) int {
 		return a + b
 	}
@@ -56,48 +52,22 @@ func Reason(operators []int, expectedResult int) bool {
 		return v
 	}
 
-	calc := func(current int, remaining []int, expected int, next recursingCalc) {
+	calc := func(current int, remaining []int, expected int, next recursingCalc) bool {
 		if current > expected {
-			result <- false
-			return
+			//result <- false
+			return false
 		} else if len(remaining) == 0 {
-			result <- current == expected
-			return
+			//result <- current == expected
+			return current == expected
 		}
 
 		b := remaining[0]
 		remaining = remaining[1:]
 
-		next(add(current, b), remaining, expected, next)
-		next(mul(current, b), remaining, expected, next)
-		next(concat(current, b), remaining, expected, next)
+		return next(add(current, b), remaining, expected, next) || next(mul(current, b), remaining, expected, next) || next(concat(current, b), remaining, expected, next)
 	}
 
-	success := make(chan bool)
-
-	// listen for failure
-	go func() {
-		wg.Wait()
-		success <- false
-	}()
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		calc(operators[0], operators[1:], expectedResult, calc)
-	}()
-
-	for true {
-		select {
-		case r := <-result:
-			if r {
-				return true
-			}
-		case s := <-success:
-			return s
-		}
-	}
-	return false
+	return calc(operators[0], operators[1:], expectedResult, calc)
 }
 
 func Extract(data []byte) (int, []int, error) {
