@@ -9,22 +9,25 @@ func TestDayEleven(t *testing.T) {
 	tests := []struct {
 		input  string
 		blinks int
-		want   string
+		want   uint
+		actual string
 	}{
-		{"125 17", 0, "125 17"},
-		{"125 17", 1, "253000 1 7"},
-		{"125 17", 4, "512 72 2024 2 0 2 4 2867 6032"},
-		{"125 17", 6, "2097446912 14168 4048 2 0 2 4 40 48 2024 40 48 80 96 2 8 6 7 6 0 3 2"},
+		{"125 17", 0, 2, "125 17"},
+		{"1200 1", 1, 3, "125 17"},
+		{"125 17", 1, 3, "253000 1 7"},
+		{"125 17", 4, 9, "512 72 2024 2 0 2 4 2867 6032"},
+		{"125 17", 6, 22, "2097446912 14168 4048 2 0 2 4 40 48 2024 40 48 80 96 2 8 6 7 6 0 3 2"},
+		{"125 17", 25, 55312, ""},
+		// 50 == 24sec, 49 == 16, 48 == 10
+		{"1", 150, uint(15766175758827462196), ""},
 	}
 	for _, test := range tests {
 		t.Run(string(test.input), func(t *testing.T) {
 			node := LoadNodeList([]byte(test.input))
 
-			for range test.blinks {
-				node.Blink()
-			}
-			if node.Render() != test.want {
-				t.Errorf("not as expected, got=%v, want=%v", node.Render(), test.want)
+			count := node.Count(test.blinks)
+			if count != uint(test.want) {
+				t.Errorf("not as expected, got=%v, want=%v", count, test.want)
 			}
 		})
 	}

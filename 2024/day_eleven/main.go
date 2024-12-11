@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"strconv"
+	"sync"
 )
 
 type Direction []int
@@ -27,90 +28,161 @@ type Cells []Cell
 type Cell struct{}
 
 type LinkedList struct {
-	head *Node
+	head  *Node
+	nodes []Node
 }
 type Node struct {
 	leftNode  *Node
 	rightNode *Node
 
+	Value    int
+	Children []Node
+	Split    bool
+}
+
+type Stone struct {
 	Value int
 }
 
-func (n *LinkedList) Render() string {
-	node := n.head
-	rendered := ""
+func CountStones(startingStones []Stone, blinks int, stoneCache map[string]uint) uint {
+	if blinks == 0 {
+		return uint(len(startingStones))
+	}
 
-	for node != nil {
-		if rendered != "" {
+	count := uint(0)
+	for _, stone := range startingStones {
+		lookup := fmt.Sprintf("%d|%d", stone.Value, blinks)
+		nextStones, ok := stoneCache[lookup]
+		if ok {
+			count += nextStones
+			continue
+		}
+
+		if stone.Value == 0 {
+			stones := []Stone{
+				{Value: 1},
+			}
+			c := CountStones(stones, blinks-1, stoneCache)
+			stoneCache[lookup] = c
+			count += c
+		} else if IsEvenDigitNum(stone.Value) {
+			left, right := SplitEvenDigitString(stone.Value)
+
+			stones := []Stone{
+				{Value: left},
+				{Value: right},
+			}
+			c := CountStones(stones, blinks-1, stoneCache)
+			stoneCache[lookup] = c
+			count += c
+		} else {
+			stones := []Stone{
+				{Value: stone.Value * 2024},
+			}
+			c := CountStones(stones, blinks-1, stoneCache)
+			stoneCache[lookup] = c
+			count += c
+		}
+	}
+	return count
+}
+
+func (n *Node) Render() string {
+	if n.Split {
+		return fmt.Sprintf("%s %s", n.Children[0].Render(), n.Children[1].Render())
+	} else {
+		return fmt.Sprintf("%d", n.Value)
+	}
+}
+
+func (n *LinkedList) Render() string {
+	first := true
+
+	rendered := ""
+	for _, node := range n.nodes {
+		if first {
+			first = false
+		} else {
 			rendered += " "
 		}
-		rendered += strconv.Itoa(node.Value)
-		node = node.rightNode
+
+		rendered += node.Render()
 	}
+
 	return rendered
 }
 
-func (l *LinkedList) Count() int {
-	node := l.head
-	count := 0
+func (l *LinkedList) Count(blinks int) uint {
+	count := uint(0)
+	countChan := make(chan uint)
+	wg := sync.WaitGroup{}
+	for i := range l.nodes {
+		wg.Add(1)
 
-	for node != nil {
-		count++
-		node = node.rightNode
+		value := l.nodes[i].Value
+		go func() {
+			var stoneCache = map[string]uint{}
+			countChan <- CountStones([]Stone{{Value: value}}, blinks, stoneCache)
+			wg.Done()
+		}()
 	}
+
+	for i := 0; i < len(l.nodes); i++ {
+		count += <-countChan
+	}
+	wg.Wait()
+
 	return count
 }
 
 // 0 becomes 1
 // if even length, replaced by 2 stone
 // if not activated it is *2024
-func (n *LinkedList) Blink() {
-	node := n.head
-
-	for node != nil {
-		if node.Value == 0 {
-			node.Value = 1
-			node = node.rightNode
-		} else if IsEvenDigitNum(node.Value) {
-			left, right := SplitEvenDigitString(node.Value)
-			rightNode := &Node{
-				rightNode: node.rightNode,
-				Value:     right,
-			}
-			leftNode := &Node{
-				leftNode:  node.leftNode,
-				rightNode: rightNode,
-				Value:     left,
-			}
-			rightNode.leftNode = leftNode
-
-			if node.leftNode != nil {
-				node.leftNode.rightNode = leftNode
-			}
-			if node.rightNode != nil {
-				node.rightNode.leftNode = rightNode
-			}
-
-			if node.leftNode == nil {
-				n.head = leftNode
-			}
-			node.leftNode = nil
-			node.rightNode = nil
-
-			node = rightNode.rightNode
-		} else {
-			node.Value *= 2024
-			node = node.rightNode
+func (n *Node) Blink() {
+	if n.Split {
+		for i := range n.Children {
+			n.Children[i].Blink()
 		}
+	} else if IsEvenDigitNum(n.Value) {
+		left, right := SplitEvenDigitString(n.Value)
 
+		n.Children = make([]Node, 2)
+
+		n.Children[0].Value = left
+		n.Children[1].Value = right
+
+		n.Split = true
+	} else if n.Value == 0 {
+		n.Value = 1
+	} else {
+		n.Value *= 2024
 	}
+}
+
+func (n *LinkedList) Blink() {
+	wg := sync.WaitGroup{}
+	for i := range n.nodes {
+		wg.Add(1)
+
+		go func() {
+			n.nodes[i].Blink()
+			wg.Done()
+		}()
+	}
+	wg.Wait()
 }
 
 func IsEvenDigitNum(number int) bool {
 	return len(fmt.Sprintf("%d", number))%2 == 0
 }
 
+var splitCache = map[int][]int{}
+
 func SplitEvenDigitString(number int) (int, int) {
+	if v, ok := splitCache[number]; ok {
+		return v[0], v[1]
+	}
+
 	r := fmt.Sprintf("%d", number)
 
 	start := 0
@@ -132,8 +204,7 @@ func SplitEvenDigitString(number int) (int, int) {
 }
 
 func LoadNodeList(data []byte) *LinkedList {
-	var firstNode *Node
-	var prevNode *Node
+	nodes := []Node{}
 
 	for _, num := range bytes.Split(data, []byte(" ")) {
 		n, err := strconv.Atoi(string(num))
@@ -141,18 +212,13 @@ func LoadNodeList(data []byte) *LinkedList {
 			panic(err)
 		}
 		node := &Node{
-			Value: n,
+			Value:    n,
+			Children: make([]Node, 2),
 		}
 
-		if firstNode == nil {
-			firstNode = node
-		} else {
-			prevNode.rightNode = node
-			node.leftNode = prevNode
-		}
-		prevNode = node
+		nodes = append(nodes, *node)
 	}
-	return &LinkedList{head: firstNode}
+	return &LinkedList{head: &nodes[0], nodes: nodes}
 }
 
 func main() {
@@ -162,13 +228,15 @@ func main() {
 
 		n := LoadNodeList(data)
 
-		for i := range 75 {
-			fmt.Printf("Loop %d\n", i)
+		//for i := range 75 {
+		//	fmt.Printf("Loop %d\n", i)
+		//
+		//	n.Blink()
+		//}
 
-			n.Blink()
-		}
-
-		// 54ms
-		fmt.Printf("Part 1: %d\n", n.Count())
+		// 54ms (part 2 code: 1.6ms)
+		//fmt.Printf("Part 1: %d\n", n.Count(25))
+		// 43ms
+		fmt.Printf("Part 2: %d\n", n.Count(175))
 	})
 }
