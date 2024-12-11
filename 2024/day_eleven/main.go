@@ -44,7 +44,9 @@ type Stone struct {
 	Value int
 }
 
-func CountStones(startingStones []Stone, blinks int, stoneCache map[string]uint) uint {
+var stoneCache map[string]uint
+
+func CountStones(startingStones []Stone, blinks int) uint {
 	if blinks == 0 {
 		return uint(len(startingStones))
 	}
@@ -62,7 +64,7 @@ func CountStones(startingStones []Stone, blinks int, stoneCache map[string]uint)
 			stones := []Stone{
 				{Value: 1},
 			}
-			c := CountStones(stones, blinks-1, stoneCache)
+			c := CountStones(stones, blinks-1)
 			stoneCache[lookup] = c
 			count += c
 		} else if IsEvenDigitNum(stone.Value) {
@@ -72,14 +74,14 @@ func CountStones(startingStones []Stone, blinks int, stoneCache map[string]uint)
 				{Value: left},
 				{Value: right},
 			}
-			c := CountStones(stones, blinks-1, stoneCache)
+			c := CountStones(stones, blinks-1)
 			stoneCache[lookup] = c
 			count += c
 		} else {
 			stones := []Stone{
 				{Value: stone.Value * 2024},
 			}
-			c := CountStones(stones, blinks-1, stoneCache)
+			c := CountStones(stones, blinks-1)
 			stoneCache[lookup] = c
 			count += c
 		}
@@ -114,23 +116,10 @@ func (n *LinkedList) Render() string {
 
 func (l *LinkedList) Count(blinks int) uint {
 	count := uint(0)
-	countChan := make(chan uint)
-	wg := sync.WaitGroup{}
 	for i := range l.nodes {
-		wg.Add(1)
-
 		value := l.nodes[i].Value
-		go func() {
-			var stoneCache = map[string]uint{}
-			countChan <- CountStones([]Stone{{Value: value}}, blinks, stoneCache)
-			wg.Done()
-		}()
+		count += CountStones([]Stone{{Value: value}}, blinks)
 	}
-
-	for i := 0; i < len(l.nodes); i++ {
-		count += <-countChan
-	}
-	wg.Wait()
 
 	return count
 }
@@ -223,7 +212,6 @@ func LoadNodeList(data []byte) *LinkedList {
 
 func main() {
 	adventofcode.Time(func() {
-
 		data := adventofcode.LoadFile("2024/day_eleven/input.txt")
 
 		n := LoadNodeList(data)
@@ -237,6 +225,10 @@ func main() {
 		// 54ms (part 2 code: 1.6ms)
 		//fmt.Printf("Part 1: %d\n", n.Count(25))
 		// 43ms
-		fmt.Printf("Part 2: %d\n", n.Count(175))
+		fmt.Printf("Part 2: %d\n", n.Count(75))
 	})
+}
+
+func init() {
+	stoneCache = map[string]uint{}
 }
