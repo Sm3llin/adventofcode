@@ -345,9 +345,9 @@ func main() {
 
 		data := adventofcode.LoadFile("2024/day_twelve/input.txt")
 
-		cost := FenceCost(data)
-		fmt.Printf("Part 1: %d\n", cost)
-		cost = FenceDiscount(data)
+		//cost := FenceCost(data)
+		//fmt.Printf("Part 1: %d\n", cost)
+		cost := FenceDiscount(data)
 		fmt.Printf("Part 2: %d\n", cost)
 	})
 }
