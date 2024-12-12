@@ -74,7 +74,7 @@ func (r *Region) GetBounds() (int, int, int, int) {
 			regionYMax = plot.Y
 		}
 	}
-	return regionXMin - 2, regionXMax + 1, regionYMin - 2, regionYMax + 1
+	return regionXMin - 2, regionXMax + 2, regionYMin - 2, regionYMax + 2
 }
 
 func (r *Region) Edges() (edges int) {
@@ -208,8 +208,8 @@ func (m *Map) FenceDiscountCost() int {
 
 	for _, region := range m.Regions {
 		edges := region.Edges()
-		//fmt.Printf(region.Render())
-		//fmt.Printf("plots=%d, edges=%d\n\n", len(region.Plots), edges)
+		fmt.Printf(region.Render())
+		fmt.Printf("plots=%d, edges=%d\n\n", len(region.Plots), edges)
 		sum += edges * len(region.Plots)
 	}
 

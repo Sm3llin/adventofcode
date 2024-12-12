@@ -18,6 +18,10 @@ VVIIICJJEE
 MIIIIIJJEE
 MIIISIJEEE
 MMMISSJEEE`
+	fieldC = `AAAA
+BBBB
+BGGB
+BBBB`
 )
 
 func TestFieldFenceCost(t *testing.T) {
@@ -27,6 +31,7 @@ func TestFieldFenceCost(t *testing.T) {
 		want, wantDiscount int
 	}{
 		{"basic", fieldA, 140, 80},
+		{"surrounded", fieldC, 4*10 + 10*20 + 2*6, 104},
 		{"complex", fieldB, 1930, 1206},
 	}
 
