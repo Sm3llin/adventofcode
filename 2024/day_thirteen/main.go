@@ -16,8 +16,6 @@ type Machine struct {
 }
 
 func (m Machine) FastSolve(pressLimit int) []Solution {
-	// Decide on the cheapest movement option and use that to get as
-	// close as possible to the target number, then step backwards from there
 	solutions := []Solution{}
 
 	// use the cheapest solution to get to
