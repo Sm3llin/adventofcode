@@ -15,7 +15,28 @@ type Machine struct {
 	Prize Prize
 }
 
-func (m Machine) Solve() []Solution {
+func (m Machine) FastSolve(pressLimit int) []Solution {
+	// Decide on the cheapest movement option and use that to get as
+	// close as possible to the target number, then step backwards from there
+	solutions := []Solution{}
+
+	// use the cheapest solution to get to
+	a := (m.Prize.X*m.ButtonB.Y - m.Prize.Y*m.ButtonB.X) / (m.ButtonA.X*m.ButtonB.Y - m.ButtonA.Y*m.ButtonB.X)
+	b := (m.ButtonA.X*m.Prize.Y - m.ButtonA.Y*m.Prize.X) / (m.ButtonA.X*m.ButtonB.Y - m.ButtonA.Y*m.ButtonB.X)
+
+	x := a*m.ButtonA.X + b*m.ButtonB.X
+	y := a*m.ButtonA.Y + b*m.ButtonB.Y
+
+	solved := x == m.Prize.X && y == m.Prize.Y
+
+	if (pressLimit == -1 || (a < pressLimit && b < pressLimit)) && solved {
+		solutions = append(solutions, Solution{A: a, B: b})
+	}
+
+	return solutions
+}
+
+func (m Machine) Solve(pressLimit int) []Solution {
 	var solution Solution
 	var token, tokenCost uint
 	tokenCost--
@@ -31,21 +52,22 @@ func (m Machine) Solve() []Solution {
 	}
 
 	for portion > 0 {
-
 		// check if other button can be modulo
 		if (xPrize-portion)%xBButton == 0 {
 			aPresses := portion / xAButton
 			bPresses := (xPrize - portion) / xBButton
 
-			exceededA := aPresses > 100
-			exceededB := bPresses > 100
+			if pressLimit != 0 {
+				exceededA := aPresses > pressLimit
+				exceededB := bPresses > pressLimit
 
-			// no more than 100 presses allowed
-			if exceededA && exceededB {
-				break
-			} else if exceededA || exceededB {
-				portion -= xAButton
-				continue
+				// no more than 100 presses allowed
+				if exceededA && exceededB {
+					break
+				} else if exceededA || exceededB {
+					portion -= xAButton
+					continue
+				}
 			}
 
 			// this could be valid now so we should check Y buttons are valid
@@ -89,13 +111,14 @@ func (s Solution) Tokens() int {
 }
 
 // Placeholder for the CountCheapestPrizes function
-func CountCheapestPrizes(machines []Machine) int {
+func CountCheapestPrizes(machines []Machine, pressLimit int) int {
 	var tokens int
 
 	for i, machine := range machines {
 		_ = i
-		solutions := machine.Solve()
-		//fmt.Printf("Solved %d/%d\n", i+1, len(machines))
+		fmt.Printf("Solving %d/%d\r", i+1, len(machines))
+		solutions := machine.FastSolve(pressLimit)
+		fmt.Printf("Solved  %d/%d\r", i+1, len(machines))
 
 		var cheapestSolution *Solution
 		for _, solution := range solutions {
@@ -111,11 +134,12 @@ func CountCheapestPrizes(machines []Machine) int {
 			tokens += cheapestSolution.Tokens()
 		}
 	}
+	fmt.Printf("\n")
 
 	return tokens
 }
 
-func LoadMachines(data []byte) []Machine {
+func LoadMachines(data []byte, correction int) []Machine {
 	machines := []Machine{}
 	for _, line := range strings.Split(string(data), "\n\n") {
 		if line == "" {
@@ -140,7 +164,7 @@ func LoadMachines(data []byte) []Machine {
 		machine := Machine{
 			ButtonA: Button{X: aButtonX, Y: aButtonY},
 			ButtonB: Button{X: bButtonX, Y: bButtonY},
-			Prize:   Prize{X: prizeX, Y: prizeY},
+			Prize:   Prize{X: prizeX + correction, Y: prizeY + correction},
 		}
 
 		machines = append(machines, machine)
@@ -151,10 +175,18 @@ func LoadMachines(data []byte) []Machine {
 func main() {
 	adventofcode.Time(func() {
 		data := adventofcode.LoadFile("2024/day_thirteen/input.txt")
-		machines := LoadMachines(data)
+		machines := LoadMachines(data, 0)
 
 		// part 1: 404us
-		fmt.Printf("Part 1: Tokens=%d\n", CountCheapestPrizes(machines))
+		fmt.Printf("Part 1: Tokens=%d\n", CountCheapestPrizes(machines, 100))
+		//
+	})
+	adventofcode.Time(func() {
+		data := adventofcode.LoadFile("2024/day_thirteen/input.txt")
+		machines := LoadMachines(data, 10000000000000)
+
+		// part 2: infinity
+		fmt.Printf("Part 2: Tokens=%d\n", CountCheapestPrizes(machines, -1))
 		//
 	})
 }
