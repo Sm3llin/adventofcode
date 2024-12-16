@@ -44,7 +44,7 @@ func NewMaze(data []byte) (Maze, Position, Position) {
 	return m, start, end
 }
 
-func (m Maze) Solve(start Position, end Position) int {
+func (m Maze) Solve(start Position, end Position) (int, int) {
 	reindeer := m.DeployReindeer(start)
 
 	// march lowest scoring reindeer until it's position is the end
@@ -54,8 +54,26 @@ func (m Maze) Solve(start Position, end Position) int {
 		var lowest *Reindeer
 		for x, r := range reindeer {
 			if r.X == end.X && r.Y == end.Y {
-				fmt.Printf("Found lowest scoring reindeer at %d, %d (score=%d)\n", r.X, r.Y, r.Score)
-				return r.Score
+				fmt.Printf("Found lowest scoring reindeer at %d, %d (score=%d) after %d steps\n", r.X, r.Y, r.Score, r.Steps)
+				for _, friend := range r.Friends {
+					for _, p := range friend.Path {
+						m[p.Y][p.X] = 'O'
+					}
+				}
+				for _, p := range r.Path {
+					m[p.Y][p.X] = 'O'
+				}
+
+				var score int
+				for _, line := range m {
+					for _, b := range line {
+						if b == 'O' {
+							score++
+						}
+					}
+				}
+
+				return r.Score, score
 			}
 			if lowest == nil || r.Score < lowest.Score {
 				lowestX = x
@@ -68,6 +86,18 @@ func (m Maze) Solve(start Position, end Position) int {
 		}
 
 		if !lowest.Move(m) {
+			for _, r := range reindeer {
+				// this doesn't work as the main branch
+				if r.X == lowest.X && r.Y == lowest.Y && ((r.Score == lowest.Score && slices.Equal(r.Facing, lowest.Facing)) || r.Score-1000 == lowest.Score && !slices.Equal(r.Facing, lowest.Facing)) {
+					r.Friends = append(r.Friends, lowest)
+
+					for _, friend := range r.Friends {
+						if friend == lowest {
+							continue
+						}
+					}
+				}
+			}
 			// remove from pool
 			reindeer = append(reindeer[:lowestX], reindeer[lowestX+1:]...)
 			continue
@@ -75,14 +105,12 @@ func (m Maze) Solve(start Position, end Position) int {
 
 		//fmt.Println(m)
 
-		// being lazy
-		var p int
-		nextReindeer := make([]*Reindeer, 2)
-		for b := range 2 {
-			nextReindeer[p] = lowest.Clone().Turn(b == 0)
-			p++
+		if lowest.Check(m, true) == '.' {
+			reindeer = append(reindeer, lowest.Clone().Turn(true))
 		}
-		reindeer = append(reindeer, nextReindeer...)
+		if lowest.Check(m, false) == '.' {
+			reindeer = append(reindeer, lowest.Clone().Turn(false))
+		}
 	}
 
 	panic("unreachable")
@@ -118,6 +146,10 @@ func (m Maze) DeployReindeer(start Position) []*Reindeer {
 		X:      start.X,
 		Y:      start.Y,
 		Facing: RIGHT,
+		Path: []Position{
+			{start.X, start.Y},
+		},
+		Friends: []*Reindeer{},
 	}
 	reindeer[1] = reindeer[0].Clone().Turn(true)
 	reindeer[2] = reindeer[0].Clone().Turn(false)
@@ -161,15 +193,27 @@ type Reindeer struct {
 
 	X, Y   int
 	Facing Direction
+
+	Path    []Position
+	Friends []*Reindeer
 }
 
 func (r *Reindeer) Clone() *Reindeer {
+	friends := make([]*Reindeer, len(r.Friends))
+	for i, f := range r.Friends {
+		friends[i] = f
+	}
+	path := make([]Position, len(r.Path))
+	copy(path, r.Path)
+
 	return &Reindeer{
-		Score:  r.Score,
-		Steps:  r.Steps,
-		X:      r.X,
-		Y:      r.Y,
-		Facing: r.Facing,
+		Score:   r.Score,
+		Steps:   r.Steps,
+		X:       r.X,
+		Y:       r.Y,
+		Facing:  r.Facing,
+		Path:    path,
+		Friends: friends,
 	}
 }
 
@@ -186,6 +230,7 @@ func (r *Reindeer) Move(m Maze) bool {
 	case '*':
 		// potentially we are on a cheaper path but crossing another one
 		if m.Get(r.X+r.Facing[0], r.Y+r.Facing[1]) == '.' {
+			r.Path = append(r.Path, Position{r.X, r.Y})
 			return true
 		}
 		fallthrough
@@ -194,8 +239,37 @@ func (r *Reindeer) Move(m Maze) bool {
 	case '.':
 		m[r.Y][r.X] = '*'
 	}
+	r.Path = append(r.Path, Position{r.X, r.Y})
 	return true
+}
 
+func (r *Reindeer) Check(m Maze, left bool) byte {
+	if slices.Equal(r.Facing, UP) {
+		if left {
+			return m.Get(r.X+LEFT[0], r.Y+LEFT[1])
+		} else {
+			return m.Get(r.X+RIGHT[0], r.Y+RIGHT[1])
+		}
+	} else if slices.Equal(r.Facing, DOWN) {
+		if left {
+			return m.Get(r.X+RIGHT[0], r.Y+RIGHT[1])
+		} else {
+			return m.Get(r.X+LEFT[0], r.Y+LEFT[1])
+		}
+	} else if slices.Equal(r.Facing, LEFT) {
+		if left {
+			return m.Get(r.X+DOWN[0], r.Y+DOWN[1])
+		} else {
+			return m.Get(r.X+UP[0], r.Y+UP[1])
+		}
+	} else if slices.Equal(r.Facing, RIGHT) {
+		if left {
+			return m.Get(r.X+UP[0], r.Y+UP[1])
+		} else {
+			return m.Get(r.X+DOWN[0], r.Y+DOWN[1])
+		}
+	}
+	panic("unreachable")
 }
 
 func (r *Reindeer) Turn(left bool) *Reindeer {
@@ -243,6 +317,9 @@ func main() {
 	adventofcode.Time(func() {
 		data := adventofcode.LoadFile("2024/day_sixteen/input.txt")
 		m, start, end := NewMaze(data)
-		fmt.Printf("Part 1: %d\n", m.Solve(start, end))
+		score, seats := m.Solve(start, end)
+
+		fmt.Printf("Part 1: %d\n", score)
+		fmt.Printf("Part 2: %d\n", seats)
 	})
 }
