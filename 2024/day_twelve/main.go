@@ -2,6 +2,7 @@ package main
 
 import (
 	"adventofcode"
+	"adventofcode/toolbox/fs"
 	"bytes"
 	"fmt"
 )
@@ -343,7 +344,7 @@ func (r *Region) Render() string {
 func main() {
 	adventofcode.Time(func() {
 
-		data := adventofcode.LoadFile("2024/day_twelve/input.txt")
+		data := fs.LoadFile("2024/day_twelve/input.txt")
 
 		//cost := FenceCost(data)
 		//fmt.Printf("Part 1: %d\n", cost)

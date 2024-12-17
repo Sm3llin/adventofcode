@@ -2,6 +2,8 @@ package main
 
 import (
 	"adventofcode"
+	"adventofcode/toolbox/conversion"
+	"adventofcode/toolbox/fs"
 	"bytes"
 	"fmt"
 )
@@ -124,7 +126,8 @@ func LoadMap(data []byte) Map {
 			if b == '.' {
 				v = 0
 			} else {
-				v = adventofcode.SingleByteToInt(b) + 1
+				v, _ = conversion.ToInt(b)
+				v++
 			}
 
 			m.Tiles[y][x].Value = v
@@ -139,7 +142,7 @@ func LoadMap(data []byte) Map {
 
 func main() {
 	adventofcode.Time(func() {
-		data := adventofcode.LoadFile("2024/day_ten/input.txt")
+		data := fs.LoadFile("2024/day_ten/input.txt")
 		m := LoadMap(data)
 
 		score, rating := m.Score()

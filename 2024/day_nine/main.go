@@ -2,12 +2,13 @@ package main
 
 import (
 	"adventofcode"
+	"adventofcode/toolbox/fs"
 	"fmt"
 )
 
 func main() {
 	adventofcode.Time(func() {
-		data := adventofcode.LoadFile("2024/day_nine/input.txt")
+		data := fs.LoadFile("2024/day_nine/input.txt")
 		disk := LoadDisk(data)
 
 		fmt.Printf("Before Checksum: %d\n", disk.Checksum())

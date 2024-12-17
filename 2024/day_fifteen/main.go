@@ -2,6 +2,7 @@ package main
 
 import (
 	"adventofcode"
+	"adventofcode/toolbox/fs"
 	"bytes"
 	"fmt"
 	"slices"
@@ -9,7 +10,7 @@ import (
 
 func main() {
 	adventofcode.Time(func() {
-		data := adventofcode.LoadFile("2024/day_fifteen/input.txt")
+		data := fs.LoadFile("2024/day_fifteen/input.txt")
 		factory := NewFactory(data, false)
 
 		RunAutomation(factory)
@@ -18,7 +19,7 @@ func main() {
 		fmt.Printf("Part 1: %d\n", gpsTotal)
 	})
 	adventofcode.Time(func() {
-		data := adventofcode.LoadFile("2024/day_fifteen/input.txt")
+		data := fs.LoadFile("2024/day_fifteen/input.txt")
 		factory := NewFactory(data, true)
 
 		RunAutomation(factory)

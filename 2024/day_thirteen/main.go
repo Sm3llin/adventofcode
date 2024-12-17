@@ -2,6 +2,7 @@ package main
 
 import (
 	"adventofcode"
+	"adventofcode/toolbox/fs"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -172,7 +173,7 @@ func LoadMachines(data []byte, correction int) []Machine {
 
 func main() {
 	adventofcode.Time(func() {
-		data := adventofcode.LoadFile("2024/day_thirteen/input.txt")
+		data := fs.LoadFile("2024/day_thirteen/input.txt")
 		machines := LoadMachines(data, 0)
 
 		// part 1: 404us
@@ -180,7 +181,7 @@ func main() {
 		//
 	})
 	adventofcode.Time(func() {
-		data := adventofcode.LoadFile("2024/day_thirteen/input.txt")
+		data := fs.LoadFile("2024/day_thirteen/input.txt")
 		machines := LoadMachines(data, 10000000000000)
 
 		// part 2: infinity

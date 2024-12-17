@@ -2,6 +2,7 @@ package main
 
 import (
 	"adventofcode"
+	"adventofcode/toolbox/fs"
 	"bytes"
 	"fmt"
 	"slices"
@@ -315,7 +316,7 @@ var (
 
 func main() {
 	adventofcode.Time(func() {
-		data := adventofcode.LoadFile("2024/day_sixteen/input.txt")
+		data := fs.LoadFile("2024/day_sixteen/input.txt")
 		m, start, end := NewMaze(data)
 		score, seats := m.Solve(start, end)
 

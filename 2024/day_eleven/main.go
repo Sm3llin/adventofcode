@@ -2,6 +2,7 @@ package main
 
 import (
 	"adventofcode"
+	"adventofcode/toolbox/fs"
 	"bytes"
 	"fmt"
 	"strconv"
@@ -212,7 +213,7 @@ func LoadNodeList(data []byte) *LinkedList {
 
 func main() {
 	adventofcode.Time(func() {
-		data := adventofcode.LoadFile("2024/day_eleven/input.txt")
+		data := fs.LoadFile("2024/day_eleven/input.txt")
 
 		n := LoadNodeList(data)
 

@@ -2,6 +2,7 @@ package main
 
 import (
 	"adventofcode"
+	"adventofcode/toolbox/fs"
 	"bytes"
 	"fmt"
 	"regexp"
@@ -252,7 +253,7 @@ func ParseRobotData(line string) (Robot, error) {
 
 func main() {
 	adventofcode.Time(func() {
-		data := adventofcode.LoadFile("2024/day_fourteen/input.txt")
+		data := fs.LoadFile("2024/day_fourteen/input.txt")
 		robots := LoadRobots(data)
 		grid := Grid{Width: Width, Height: Height}
 
@@ -260,7 +261,7 @@ func main() {
 		fmt.Printf("Safety Score: %d\n", SafetyScore(grid, robots))
 	})
 	adventofcode.Time(func() {
-		data := adventofcode.LoadFile("2024/day_fourteen/input.txt")
+		data := fs.LoadFile("2024/day_fourteen/input.txt")
 		robots := LoadRobots(data)
 		grid := Grid{Width: Width, Height: Height}
 

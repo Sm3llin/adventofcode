@@ -1,4 +1,4 @@
-package adventofcode
+package fs
 
 import "os"
 
