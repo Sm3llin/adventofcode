@@ -24,6 +24,11 @@ func TestLoadGame(t *testing.T) {
 				},
 				GetResult: func(input string) (*datatypes.Inventory[text.Text], error) {
 					i, _, err := NewGame([]byte(input))
+
+					i.SetX("blue", 14)
+					i.SetX("red", 12)
+					i.SetX("green", 13)
+
 					return i, err
 				},
 			},

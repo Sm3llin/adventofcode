@@ -7,6 +7,18 @@ type Inventory[T any] struct {
 	Stock map[string]int
 }
 
+// Copy
+func (i *Inventory[T]) Copy() *Inventory[T] {
+	stock := make(map[string]int, len(i.Stock))
+	for k, v := range i.Stock {
+		stock[k] = v
+	}
+	return &Inventory[T]{
+		Label: i.Label,
+		Stock: stock,
+	}
+}
+
 func (i *Inventory[T]) Add(item string) {
 	i.AddX(item, 1)
 }

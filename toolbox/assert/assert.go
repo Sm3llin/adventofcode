@@ -1,6 +1,8 @@
 package assert
 
-import "fmt"
+import (
+	"fmt"
+)
 
 func Assert(cond bool) {
 	if !cond {
@@ -26,6 +28,9 @@ func NotEqual[T comparable](a, b T) {
 	}
 }
 
+func LessThan[T int | int64 | byte | float64](a, b T) bool {
+	return a < b
+}
 func Length[T any](v []T) {
 	if len(v) == 0 {
 		panic("expected non-empty slice")

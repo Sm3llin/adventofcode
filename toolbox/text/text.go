@@ -39,6 +39,10 @@ func (t Text) String() string {
 	return string(t)
 }
 
+func (t Text) Bytes() []byte {
+	return []byte(t)
+}
+
 // DigitFrom get the digit of the matching word in text
 func DigitFrom(word Text) Text {
 	if len(word) == 1 && byte(word[0]) >= '0' && word[0] <= '9' {

@@ -6,10 +6,29 @@ import (
 	"reflect"
 )
 
+// Direction is an array of 2 items [x, y]
+type Direction []int
+
+var (
+	N  = Direction{0, -1}
+	NE = Direction{1, -1}
+	E  = Direction{1, 0}
+	SE = Direction{1, 1}
+	S  = Direction{0, 1}
+	SW = Direction{-1, 1}
+	W  = Direction{-1, 0}
+	NW = Direction{-1, -1}
+
+	ConnectedDirections = []Direction{N, E, S, W}
+	DiagonalDirections  = []Direction{NE, SE, SW, NW}
+	AllDirections       = []Direction{N, NE, E, SE, S, SW, W, NW}
+)
+
 type Position struct {
 	X int
 	Y int
 }
+
 type Grid[T any] struct {
 	Data [][]T
 
@@ -30,12 +49,25 @@ func NewGrid[T any](data [][]T) Grid[T] {
 }
 
 func (g Grid[T]) All() iter.Seq2[Position, T] {
-	var y, x int
-
 	return func(yield func(Position, T) bool) {
+		var y, x int
 		for y = 0; y < g.Height; y++ {
 			for x = 0; x < g.Width; x++ {
 				if !yield(Position{x, y}, g.Data[y][x]) {
+					return
+				}
+			}
+		}
+	}
+}
+
+// Neighbours gets all neighbours that are connected N, E, S, W
+func (g Grid[T]) Neighbours(x, y int, directions []Direction) iter.Seq2[Position, T] {
+	return func(yield func(Position, T) bool) {
+		for _, d := range directions {
+			nx, ny := x+d[0], y+d[1]
+			if g.CheckBounds(nx, ny) {
+				if !yield(Position{nx, ny}, g.Data[ny][nx]) {
 					return
 				}
 			}
