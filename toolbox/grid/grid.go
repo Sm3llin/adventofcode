@@ -29,6 +29,14 @@ type Position struct {
 	Y int
 }
 
+func (p Position) Move(d Direction) Position {
+	return Position{p.X + d[0], p.Y + d[1]}
+}
+
+func (p Position) Equal(o Position) bool {
+	return p.X == o.X && p.Y == o.Y
+}
+
 type Grid[T any] struct {
 	Data [][]T
 
@@ -41,6 +49,23 @@ func NewGrid[T any](data [][]T) Grid[T] {
 	if len(data) >= 1 {
 		width = len(data[0])
 	}
+	return Grid[T]{
+		Data:   data,
+		Height: len(data),
+		Width:  width,
+	}
+}
+
+func NewGridValue[T any](value T, width, height int) Grid[T] {
+	data := make([][]T, height)
+	for i := range data {
+		data[i] = make([]T, width)
+
+		for j := range data[i] {
+			data[i][j] = value
+		}
+	}
+
 	return Grid[T]{
 		Data:   data,
 		Height: len(data),
