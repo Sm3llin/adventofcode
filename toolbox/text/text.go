@@ -152,3 +152,9 @@ func (t Texts) Trim() Texts {
 		return s.TrimSpace()
 	})
 }
+
+func (t Texts) Bytes() [][]byte {
+	return conversion.To(t, func(s Text) []byte {
+		return s.Bytes()
+	})
+}
