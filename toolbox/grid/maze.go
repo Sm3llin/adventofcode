@@ -1,6 +1,7 @@
 package grid
 
 import (
+	"adventofcode/toolbox/arrays"
 	"slices"
 )
 
@@ -134,4 +135,47 @@ func (m *Maze[T]) Solve(start, end Position) ([]Position, bool) {
 	}
 
 	return nil, false
+}
+
+func (m *Maze[T]) FloodFill(start Position) Grid[int] {
+	type tracker struct {
+		position Position
+		step     int
+	}
+	q := arrays.Queue[tracker]{}
+	q.Push(tracker{
+		position: start,
+		step:     0,
+	})
+
+	// create a copy of maze as an int grid
+	floodGrid := NewGridValue(-1, m.Width, m.Height)
+
+	for t := range q.Iter() {
+		cell, err := m.Get(t.position.X, t.position.Y)
+		if err != nil {
+			continue
+		}
+		if cell == m.Wall {
+			continue
+		}
+		floodGrid.Set(t.position.X, t.position.Y, t.step)
+		for _, d := range ConnectedDirections {
+			nextPosition := t.position.Move(d)
+
+			current, err := floodGrid.Get(nextPosition.X, nextPosition.Y)
+			if err != nil {
+				continue
+			}
+			if current != -1 && current <= t.step {
+				continue
+			}
+
+			q.Push(tracker{
+				position: nextPosition,
+				step:     t.step + 1,
+			})
+		}
+	}
+	return floodGrid
 }

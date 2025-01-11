@@ -37,6 +37,17 @@ func (p Position) Equal(o Position) bool {
 	return p.X == o.X && p.Y == o.Y
 }
 
+func (p Position) Delta(other Position) (x int, y int) {
+	x, y = other.X-p.X, other.Y-p.Y
+	if x < 0 {
+		x = -x
+	}
+	if y < 0 {
+		y = -y
+	}
+	return
+}
+
 type Grid[T any] struct {
 	Data [][]T
 
@@ -126,10 +137,22 @@ func (g Grid[T]) String() string {
 func (g Grid[T]) Render() string {
 	var s string
 	for _, row := range g.Data {
+		s += "|"
 		for _, cell := range row {
 			s += fmt.Sprintf("%v", cell)
+			s += "|"
 		}
 		s += "\n"
 	}
 	return s
+}
+
+func (g *Grid[T]) FindAndReplace(find func(v T) bool, newValue T) (Position, error) {
+	for p, cell := range g.All() {
+		if find(cell) {
+			g.Set(p.X, p.Y, newValue)
+			return p, nil
+		}
+	}
+	return Position{}, fmt.Errorf("not found")
 }
