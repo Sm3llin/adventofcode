@@ -21,7 +21,19 @@ var (
 #.#.#.#.#.#.###
 #...#...#...###
 ###############`
+
+	example2 = `######
+#S##E#
+#....#
+######`
+	example3 = `######
+#S##E#
+#.#..#
+#...##
+######`
 )
+
+// T7: 4, 2
 
 type input struct {
 	s         string
@@ -35,6 +47,21 @@ func TestDay20(t *testing.T) {
 			Name:   "exampleA",
 			Input:  input{example1, 2, 0},
 			Expect: 44,
+		},
+		{
+			Name:   "exampleB",
+			Input:  input{example2, 2, 0},
+			Expect: 0,
+		},
+		{
+			Name:   "exampleB",
+			Input:  input{example2, 3, 0},
+			Expect: 1,
+		},
+		{
+			Name:   "exampleC",
+			Input:  input{example3, 3, 0},
+			Expect: 3,
 		},
 		{
 			Name:   "exampleA",

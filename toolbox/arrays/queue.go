@@ -2,11 +2,11 @@ package arrays
 
 import "iter"
 
-type Queue[T any] struct {
+type Queue[T comparable] struct {
 	items []T
 }
 
-func NewQueue[T any](items []T) *Queue[T] {
+func NewQueue[T comparable](items []T) *Queue[T] {
 	return &Queue[T]{
 		items: items,
 	}
@@ -28,4 +28,13 @@ func (q *Queue[T]) Iter() iter.Seq[T] {
 			yield(q.Pop())
 		}
 	}
+}
+
+func (q *Queue[T]) Exists(needle T) bool {
+	for _, item := range q.items {
+		if item == needle {
+			return true
+		}
+	}
+	return false
 }

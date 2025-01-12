@@ -84,6 +84,18 @@ func NewGridValue[T any](value T, width, height int) Grid[T] {
 	}
 }
 
+func (g Grid[T]) Clone() Grid[T] {
+	data := make([][]T, len(g.Data))
+	for i := range data {
+		data[i] = make([]T, len(g.Data[i]))
+
+		for j := range data[i] {
+			data[i][j] = g.Data[i][j]
+		}
+	}
+	return Grid[T]{data, g.Height, g.Width}
+}
+
 func (g Grid[T]) All() iter.Seq2[Position, T] {
 	return func(yield func(Position, T) bool) {
 		var y, x int
@@ -132,6 +144,20 @@ func (g Grid[T]) Swap(xA, yA, xB, yB int) {
 
 func (g Grid[T]) String() string {
 	return fmt.Sprintf("Grid[%d, %d]", g.Height, g.Width)
+}
+
+func (g Grid[T]) RenderFunc(f func(v T) string) string {
+	var s string
+	for _, row := range g.Data {
+		s += "|"
+		for _, cell := range row {
+			s += f(cell)
+			s += "|"
+		}
+		s += "\n"
+	}
+	return s
+
 }
 
 func (g Grid[T]) Render() string {
