@@ -3,6 +3,7 @@ package grid
 import (
 	"fmt"
 	"iter"
+	"math"
 	"reflect"
 )
 
@@ -117,6 +118,29 @@ func (g Grid[T]) Neighbours(x, y int, directions []Direction) iter.Seq2[Position
 			if g.CheckBounds(nx, ny) {
 				if !yield(Position{nx, ny}, g.Data[ny][nx]) {
 					return
+				}
+			}
+		}
+	}
+}
+
+func (g Grid[T]) Around(position Position, distance int) iter.Seq2[Position, T] {
+	return func(yield func(Position, T) bool) {
+		for y := position.Y - distance; y <= position.Y+distance; y++ {
+			for x := position.X - distance; x <= position.X+distance; x++ {
+				if y == position.Y && x == position.X {
+					continue
+				}
+				v := int(math.Abs(float64(position.X-x)) + math.Abs(float64(position.Y-y)))
+
+				if v <= distance {
+					n, err := g.Get(x, y)
+					if err != nil {
+						continue
+					}
+					if !yield(Position{x, y}, n) {
+						return
+					}
 				}
 			}
 		}

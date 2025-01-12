@@ -2,12 +2,12 @@ package main
 
 import (
 	"adventofcode"
-	"adventofcode/toolbox/arrays"
 	"adventofcode/toolbox/fs"
 	"adventofcode/toolbox/grid"
 	"bytes"
 	"fmt"
 	"log/slog"
+	"math"
 )
 
 func main() {
@@ -50,14 +50,6 @@ func solve(data []byte, cheat int, countPico int) int {
 		panic("did not get expected output")
 	}
 
-	// get the number at start
-	//total, err := flood.Get(start.X, start.Y)
-	//if err != nil {
-	//	panic(err)
-	//}
-
-	// TODO: we could walk the best path and then do a step walk down the walls and check everywall in range for its
-	//       neighbours (minusing 1 for distance)
 	savingsTracker := map[int]int{}
 	for _, step := range path {
 		currentValue, err := flood.Get(step.X, step.Y)
@@ -69,12 +61,7 @@ func solve(data []byte, cheat int, countPico int) int {
 		// create a function that will take the grid, flood and start to then find the fastest shortcut
 		values := SearchForShortcut(step, currentValue, cheat, g, flood)
 
-		for _, value := range values {
-			if value < 0 {
-				continue
-			}
-			shortcutSavings := value
-
+		for _, shortcutSavings := range values {
 			if shortcutSavings > 0 && shortcutSavings >= countPico {
 				savingsTracker[shortcutSavings]++
 			}
@@ -83,13 +70,23 @@ func solve(data []byte, cheat int, countPico int) int {
 
 	var t int
 	for k, v := range savingsTracker {
-		fmt.Printf("saving %d %d\n", k, v)
-
 		if k >= countPico {
+			fmt.Printf("saving %d %d\n", k, v)
 			t += v
 		}
 	}
 
+	for pos, currentValue := range g.Around(grid.Position{X: 1, Y: 3}, cheat) {
+		if currentValue == '#' {
+			g.Set(pos.X, pos.Y, '%')
+		} else {
+			g.Set(pos.X, pos.Y, '*')
+		}
+	}
+
+	fmt.Println(m.RenderFunc(func(v byte) string {
+		return fmt.Sprintf("%c", v)
+	}))
 	return t
 }
 
@@ -99,75 +96,27 @@ type searchGrid struct {
 }
 
 func SearchForShortcut(start grid.Position, startScore, steps int, g grid.Grid[byte], flood grid.Grid[int]) []int {
-	steps -= 1
-	// walk the edges of the "maze" for the step distance
-	finalWalls := arrays.Queue[searchGrid]{}
-	mazeWalls := arrays.Queue[searchGrid]{}
-	consideredWalls := arrays.Queue[grid.Position]{}
-
-	for pos, adj := range g.Neighbours(start.X, start.Y, grid.ConnectedDirections) {
-		if adj == '#' {
-			slog.Info("seeding initial matches", "pos", pos, "step", 1)
-			mazeWalls.Push(searchGrid{pos: pos, step: 1})
-			finalWalls.Push(searchGrid{pos: pos, step: 1})
-			consideredWalls.Push(pos)
-		}
-	}
-
-	for prevPos := range mazeWalls.Iter() {
-		if prevPos.step >= steps {
+	scores := []int{}
+	for pos, option := range g.Around(start, steps) {
+		if option != '.' {
 			continue
 		}
 
-		for pos, adj := range g.Neighbours(prevPos.pos.X, prevPos.pos.Y, grid.ConnectedDirections) {
-			// check for a bounce back and don't add
-			if adj == '#' && !consideredWalls.Exists(pos) {
-				consideredWalls.Push(pos)
-				finalWalls.Push(searchGrid{pos: pos, step: prevPos.step + 1})
-				mazeWalls.Push(searchGrid{pos: pos, step: prevPos.step + 1})
-			}
+		distance := int(math.Abs(float64(start.X-pos.X)) + math.Abs(float64(start.Y-pos.Y)))
+		score, _ := flood.Get(pos.X, pos.Y)
+
+		savings := (startScore - score) - distance
+
+		if distance > steps {
+			continue
+		}
+
+		if savings > 0 {
+			slog.Info("adding score", "savings", savings, "from", start, "pos", pos)
+			scores = append(scores, savings)
 		}
 	}
-
-	// redecorate and print the considered blocks
-	//clone := g.Clone()
-	//
-	//clone.Set(start.X, start.Y, 'S')
-	//for wall := range consideredWalls.Iter() {
-	//	clone.Set(wall.X, wall.Y, '%')
-	//}
-	//slog.Info(clone.RenderFunc(func(v byte) string {
-	//	return fmt.Sprintf("%c", v)
-	//}))
-
-	// store the ending positions to find the best saving for that square
-	found := map[string]int{}
-	scores := []int{}
-	for wall := range finalWalls.Iter() {
-		for pos, adj := range g.Neighbours(wall.pos.X, wall.pos.Y, grid.ConnectedDirections) {
-			if adj == '.' {
-				score, err := flood.Get(pos.X, pos.Y)
-				if err != nil {
-					continue
-				}
-				nextScore := (startScore - score) - (wall.step + 1)
-
-				// need to ignore when start and end is the same
-				prevScore, ok := found[fmt.Sprintf("%d|%d", pos.X, pos.Y)]
-				if ok && prevScore >= nextScore {
-					slog.Info("ignoring score", "pos", pos, "score", prevScore, "nextScore", nextScore)
-					continue
-				}
-
-				// need to add in the steps to see if it is worth it
-				if nextScore > 0 {
-					found[fmt.Sprintf("%d|%d", pos.X, pos.Y)] = nextScore
-					scores = append(scores, nextScore)
-					slog.Info("setting cheats", "pos", pos, "start", startScore, "score", score, "step", wall.step, "saving", nextScore)
-				}
-			}
-		}
-	}
+	slog.Info("found scores", "pos", start, "scores", len(scores))
 
 	return scores
 }

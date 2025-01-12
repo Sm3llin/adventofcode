@@ -61,7 +61,7 @@ func TestDay20(t *testing.T) {
 		{
 			Name:   "exampleC",
 			Input:  input{example3, 3, 0},
-			Expect: 3,
+			Expect: 4,
 		},
 		{
 			Name:   "exampleA",
