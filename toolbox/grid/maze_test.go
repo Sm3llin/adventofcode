@@ -32,7 +32,7 @@ func TestMaze_Solve(t *testing.T) {
 				start: Position{X: 0, Y: 0}, // 'S'
 				end:   Position{X: 3, Y: 3}, // 'E'
 				wall:  '#',
-				onMove: func(from, to Position) (bool, int) {
+				onMove: func(from, to Position, d Direction) (bool, int) {
 					return true, 1
 				},
 			},
@@ -81,7 +81,7 @@ func TestMaze_Solve(t *testing.T) {
 				start: Position{X: 0, Y: 0}, // 'S'
 				end:   Position{X: 2, Y: 2}, // 'E'
 				wall:  '#',
-				onMove: func(from, to Position) (bool, int) {
+				onMove: func(from, to Position, d Direction) (bool, int) {
 					return true, 1
 				},
 			},
@@ -129,7 +129,7 @@ func TestMaze_Solve(t *testing.T) {
 				start: Position{X: 0, Y: 0}, // 'S'
 				end:   Position{X: 3, Y: 3}, // 'E'
 				wall:  '#',
-				onMove: func(from, to Position) (bool, int) {
+				onMove: func(from, to Position, d Direction) (bool, int) {
 					return true, 1
 				},
 			},

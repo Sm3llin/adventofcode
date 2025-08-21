@@ -49,6 +49,11 @@ func (p Position) Delta(other Position) (x int, y int) {
 	return
 }
 
+func (p Position) Difference(other Position) (x int, y int) {
+	x, y = other.X-p.X, other.Y-p.Y
+	return
+}
+
 type Grid[T any] struct {
 	Data [][]T
 
@@ -164,6 +169,16 @@ func (g Grid[T]) Set(x, y int, value T) {
 
 func (g Grid[T]) Swap(xA, yA, xB, yB int) {
 	g.Data[yA][xA], g.Data[yB][xB] = g.Data[yB][xB], g.Data[yA][xA]
+}
+
+func (g Grid[T]) FirstIndexOf(f func(value T) bool) (Position, error) {
+	for pos, cell := range g.All() {
+		if f(cell) {
+			return pos, nil
+		}
+	}
+
+	return Position{}, fmt.Errorf("not found")
 }
 
 func (g Grid[T]) String() string {

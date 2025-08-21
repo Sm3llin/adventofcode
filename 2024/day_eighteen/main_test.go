@@ -48,7 +48,7 @@ func TestSimulatedMaze(t *testing.T) {
 		}
 		fmt.Println(g.Render())
 
-		maze := grid.NewMaze(g, "#", func(from, to grid.Position) (allow bool, score int) {
+		maze := grid.NewMaze(g, "#", func(from, to grid.Position, d grid.Direction) (allow bool, score int) {
 			return true, 1
 		})
 

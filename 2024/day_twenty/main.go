@@ -38,7 +38,7 @@ func solve(data []byte, cheat int, countPico int) int {
 		return v == 'E'
 	}, '.')
 
-	m := grid.NewMaze(g, '#', func(from, to grid.Position) (allow bool, score int) {
+	m := grid.NewMaze(g, '#', func(from, to grid.Position, d grid.Direction) (allow bool, score int) {
 		return true, 1
 	})
 

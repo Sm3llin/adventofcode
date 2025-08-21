@@ -31,7 +31,7 @@ func (m *Maze[T]) unregister(w *mazeWalker[T]) {
 	m.walkers = append(m.walkers[:idx], m.walkers[idx+1:]...)
 }
 
-type MoveFunc func(from, to Position) (allow bool, score int)
+type MoveFunc func(from, to Position, direction Direction) (allow bool, score int)
 
 func NewMaze[T comparable](g Grid[T], wall T, onMove MoveFunc) *Maze[T] {
 	return &Maze[T]{
